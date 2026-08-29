@@ -1,0 +1,1 @@
+sed -i "s/{ id: \"resetdb\", label: \"Hapus Isi Database\", icon: Trash2, dangerous: true },/...(userRole === 'admin' ? [{ id: \"resetdb\", label: \"Hapus Isi Database\", icon: Trash2, dangerous: true }] : []),/g" src/components/Sidebar.tsx
