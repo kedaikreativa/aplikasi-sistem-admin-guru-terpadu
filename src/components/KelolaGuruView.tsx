@@ -114,7 +114,8 @@ export const KelolaGuruView: React.FC<KelolaGuruViewProps> = ({ guruList }) => {
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws);
 
-        const newGurus = data.map((row: any) => ({
+        const newGurus = data.map((row: any, idx: number) => ({
+          id: `guru_${Date.now()}_${idx}`,
           nip: String(row["NIP"] || row["nip"] || "").trim(),
           nama: String(row["Nama Lengkap"] || row["Nama"] || row["nama"] || "").trim()
         })).filter(guru => guru.nip && guru.nama);
@@ -125,9 +126,9 @@ export const KelolaGuruView: React.FC<KelolaGuruViewProps> = ({ guruList }) => {
         } else {
           notifySimpanError("Format tidak valid atau data kosong.");
         }
-      } catch (error) {
-        console.error(error);
-        notifySimpanError("Gagal membaca file Excel.");
+      } catch (error: any) {
+        console.error("Excel import error:", error);
+        notifySimpanError(error?.message || "Gagal menyimpan data ke database. Pastikan koneksi Firebase terhubung.");
       }
     };
     reader.readAsBinaryString(file);

@@ -179,7 +179,8 @@ export const KelolaSiswaView: React.FC<KelolaSiswaViewProps> = ({ siswaList }) =
           notifySimpanError("Tidak ada siswa baru yang dapat diimpor (mungkin duplikat atau kolom tidak sesuai).");
         }
       } catch (err: any) {
-        notifySimpanError("Format file Excel tidak valid. Gunakan template yang disediakan.");
+        console.error("Excel import error:", err);
+        notifySimpanError(err?.message || "Gagal menyimpan data ke database. Pastikan koneksi Firebase terhubung.");
       }
       e.target.value = "";
     };
