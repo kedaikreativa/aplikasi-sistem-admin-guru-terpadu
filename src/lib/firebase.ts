@@ -11,7 +11,6 @@ import {
   getDocFromServer,
   writeBatch
 } from "firebase/firestore";
-import firebaseConfigData from "../../firebase-applet-config.json";
 import { 
   Siswa, 
   Mapel, 
@@ -24,26 +23,20 @@ import {
   Pengaturan 
 } from "../types";
 
-// Determine which config to use (Vercel ENV vars or AI Studio Local fallback)
-const envConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+// Konfigurasi Firebase Pribadi Hardcode
+const firebaseConfig = {
+  apiKey: "AIzaSyAwJgHCcCRL3tWDPQaMKR0QS0znWDxuMXE",
+  authDomain: "aplikasiguruai.firebaseapp.com",
+  projectId: "aplikasiguruai",
+  storageBucket: "aplikasiguruai.firebasestorage.app",
+  messagingSenderId: "83937950753",
+  appId: "1:83937950753:web:53471174f4901a50f2f760"
 };
-
-// If VITE_FIREBASE_API_KEY exists in Env, use it. Otherwise, use local config.
-const isUsingEnv = Boolean(envConfig.apiKey);
-const firebaseConfig = isUsingEnv ? envConfig : firebaseConfigData;
 
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Use default database for Env (Vercel) or specific ID for AI Studio
-const dbId = isUsingEnv ? "(default)" : (firebaseConfigData.firestoreDatabaseId || "(default)");
-export const firestore = getFirestore(app, dbId);
+export const firestore = getFirestore(app, "(default)");
 
 // Collections references
 export const COLLECTIONS = {
