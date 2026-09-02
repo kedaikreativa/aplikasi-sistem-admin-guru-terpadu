@@ -12,7 +12,7 @@ import {
   Bot, 
   Printer, 
   Settings, 
-  GraduationCap,
+  Presentation,
   Trash2,
   X,
   FileCheck,
@@ -103,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-9 h-9 bg-amber-400 rounded-xl flex items-center justify-center text-slate-950 font-black shadow-lg">
-              <GraduationCap className="w-5 h-5 text-slate-950" />
+              <Presentation className="w-5 h-5 text-slate-950" />
             </div>
             <div>
               <span className="font-extrabold text-lg tracking-tight text-white block leading-none">

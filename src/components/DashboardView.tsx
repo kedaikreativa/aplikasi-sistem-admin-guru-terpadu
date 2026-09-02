@@ -8,7 +8,7 @@ import {
   Calendar,
   Star,
   TrendingUp,
-  GraduationCap,
+  Presentation,
   BookMarked,
   HeartHandshake,
   Bot,
@@ -123,7 +123,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       id: "penilaian",
       title: "Input Penilaian & Leger",
       desc: "Rekap nilai harian, UTS, UAS, kalkulasi otomatis & leger siswa.",
-      icon: GraduationCap,
+      icon: Presentation,
       badge: "Nilai & Rapor",
       color: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200"
     },
@@ -182,9 +182,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
         <div className="relative z-10">
-          <h2 className="text-3xl font-extrabold mb-2">
-            Selamat Datang, {userName || (userRole === "admin" ? "Admin" : "Guru")}! 👋
-          </h2>
+          <div className="mb-3">
+            <h2 className="text-base sm:text-lg font-medium text-indigo-100 mb-0.5">
+              Selamat Datang,
+            </h2>
+            <p className="text-2xl sm:text-3xl font-extrabold leading-tight text-white drop-shadow-sm">
+              {userName || (userRole === "admin" ? "Admin" : "Guru")}! 👋
+            </p>
+          </div>
           <p className="text-indigo-100 text-lg font-medium">
             Anda login sebagai <span className="font-bold bg-white/20 px-2 py-1 rounded-lg ml-1">{userRole === "admin" ? "Administrator" : "Guru"}</span>
           </p>

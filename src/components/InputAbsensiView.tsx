@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { ClipboardCheck, Camera, CheckCircle2, Save, UserCheck, AlertCircle } from "lucide-react";
-import jsQR from "jsqr";
+import React, { useState, useEffect } from "react";
+import { ClipboardCheck, CheckCircle2, Save, UserCheck } from "lucide-react";
 import { Siswa, Mapel, LogAbsensi, Pengaturan } from "../types";
 import { saveDocument, batchSaveDocuments, COLLECTIONS } from "../lib/firebase";
 import { notifySimpanSuccess, notifySimpanError } from "../lib/swal";
@@ -21,21 +20,10 @@ export const InputAbsensiView: React.FC<InputAbsensiViewProps> = ({
   const [tanggal, setTanggal] = useState<string>(new Date().toISOString().split("T")[0]);
   const [selectedKelas, setSelectedKelas] = useState<string>("");
   const [selectedMapel, setSelectedMapel] = useState<string>("");
-  const [mode, setMode] = useState<"manual" | "scan">("manual");
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Local attendance state mapping: studentId -> status
   const [attendanceState, setAttendanceState] = useState<Record<string, 'Hadir' | 'Izin' | 'Sakit' | 'Alpa'>>({});
-
-  // QR Scanner refs & state
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [scanStatus, setScanStatus] = useState<string>("Siap melakukan scan kartu...");
-  const [cameraActive, setCameraActive] = useState<boolean>(false);
-  const [cameraError, setCameraError] = useState<string>("");
-  const [manualScanNisn, setManualScanNisn] = useState<string>("");
-  const isScanningRef = useRef<boolean>(false);
-  const activeStreamRef = useRef<MediaStream | null>(null);
 
   const kelasOptions = Array.from(new Set(siswaList.map((s) => s.kelas).filter(Boolean))).sort();
   const studentsInClass = siswaList.filter((s) => s.kelas === selectedKelas);
@@ -115,159 +103,6 @@ export const InputAbsensiView: React.FC<InputAbsensiViewProps> = ({
     }
   };
 
-  // Manual Scan Submit
-  const handleManualScanSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manualScanNisn.trim()) return;
-
-    const val = manualScanNisn.trim();
-    const matched = siswaList.find((s) => s.nisn === val || s.id === val);
-
-    if (matched) {
-      setAttendanceState((prev) => ({ ...prev, [matched.id]: "Hadir" }));
-      const statusText = `BERHASIL: ${matched.nama} (NISN: ${matched.nisn}) -> HADIR`;
-      setScanStatus(statusText);
-      notifySimpanSuccess(statusText);
-
-      const docId = `${tanggal}_${selectedKelas || matched.kelas}_${selectedMapel || 'Scan'}_${matched.id}`;
-      saveDocument(COLLECTIONS.LOG_ABSENSI, docId, {
-        id: docId,
-        waktu: tanggal,
-        tanggal: tanggal,
-        kelas: selectedKelas || matched.kelas,
-        mapel: selectedMapel || "Absensi QR",
-        idSiswa: matched.id,
-        namaSiswa: matched.nama,
-        status: "Hadir",
-        bulan: tanggal.split("-")[1] || "01",
-        tahun: tanggal.split("-")[0] || "2026",
-        namaGuru: config.Nama_Guru || "Guru"
-      });
-      setManualScanNisn("");
-    } else {
-      const errorText = `NISN/Kode '${val}' tidak ditemukan dalam database siswa.`;
-      setScanStatus(errorText);
-      notifySimpanError(errorText);
-    }
-  };
-
-  // Start Camera Process
-  const startCameraProcess = async () => {
-    setCameraError("");
-    setScanStatus("Mengaktifkan kamera...");
-
-    if (activeStreamRef.current) {
-      activeStreamRef.current.getTracks().forEach((track) => track.stop());
-    }
-
-    try {
-      const constraints: MediaStreamConstraints = {
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      activeStreamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true");
-        await videoRef.current.play();
-        setCameraActive(true);
-        isScanningRef.current = true;
-        setScanStatus("Kamera aktif. Arahkan QR Code Kartu Pelajar...");
-        scanLoop();
-      }
-    } catch (err: any) {
-      console.error("Camera access error:", err);
-      setCameraActive(false);
-      isScanningRef.current = false;
-      const errMsg = err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-        ? "Izin kamera ditolak browser. Silakan izinkan akses kamera pada ikon gembok di address bar atau buka di Tab Baru."
-        : "Kamera tidak dapat diakses atau sedang digunakan oleh aplikasi lain.";
-      setCameraError(errMsg);
-      setScanStatus("Kamera tidak aktif.");
-    }
-  };
-
-  const stopCameraProcess = () => {
-    isScanningRef.current = false;
-    setCameraActive(false);
-    if (activeStreamRef.current) {
-      activeStreamRef.current.getTracks().forEach((track) => track.stop());
-      activeStreamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-  };
-
-  const scanLoop = () => {
-    if (!isScanningRef.current) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      if (ctx) {
-        canvas.height = video.videoHeight;
-        canvas.width = video.videoWidth;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-        if (code && code.data) {
-          const codeVal = code.data.trim();
-          const matchedSiswa = siswaList.find(
-            (s) => s.nisn === codeVal || s.id === codeVal
-          );
-
-          if (matchedSiswa) {
-            setAttendanceState((prev) => ({ ...prev, [matchedSiswa.id]: "Hadir" }));
-            const successText = `BERHASIL: ${matchedSiswa.nama} (NISN: ${matchedSiswa.nisn}) -> HADIR`;
-            setScanStatus(successText);
-            setStatusMsg({ type: "success", text: successText });
-
-            const docId = `${tanggal}_${selectedKelas || matchedSiswa.kelas}_${selectedMapel || 'Scan'}_${matchedSiswa.id}`;
-            saveDocument(COLLECTIONS.LOG_ABSENSI, docId, {
-              id: docId,
-              waktu: tanggal,
-              tanggal: tanggal,
-              kelas: selectedKelas || matchedSiswa.kelas,
-              mapel: selectedMapel || "Scan QR",
-              idSiswa: matchedSiswa.id,
-              namaSiswa: matchedSiswa.nama,
-              status: "Hadir",
-              bulan: tanggal.split("-")[1] || "01",
-              tahun: tanggal.split("-")[0] || "2026",
-              namaGuru: config.Nama_Guru || "Guru"
-            });
-          } else {
-            setScanStatus(`QR Terbaca: '${codeVal}' (Data siswa tidak ditemukan)`);
-          }
-        }
-      }
-    }
-
-    if (isScanningRef.current) {
-      requestAnimationFrame(scanLoop);
-    }
-  };
-
-  // Camera lifecycle trigger when mode changes
-  useEffect(() => {
-    if (mode === "scan") {
-      startCameraProcess();
-    } else {
-      stopCameraProcess();
-    }
-
-    return () => {
-      stopCameraProcess();
-    };
-  }, [mode]);
-
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-xs border border-slate-200 dark:border-slate-800 space-y-4">
@@ -279,32 +114,8 @@ export const InputAbsensiView: React.FC<InputAbsensiViewProps> = ({
               Input Absensi Harian Siswa
             </h2>
             <p className="text-xs text-slate-500">
-              Catat presensi harian secara manual atau otomatis menggunakan QR Scanner Kamera.
+              Catat presensi harian.
             </p>
-          </div>
-
-          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
-            <button
-              onClick={() => setMode("manual")}
-              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                mode === "manual"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-              }`}
-            >
-              Input Manual
-            </button>
-            <button
-              onClick={() => setMode("scan")}
-              className={`px-4 py-1.5 text-xs font-bold rounded-lg flex items-center space-x-1 transition-colors cursor-pointer ${
-                mode === "scan"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs"
-                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-              }`}
-            >
-              <Camera className="w-3.5 h-3.5" />
-              <span>Scan QR Kamera</span>
-            </button>
           </div>
         </div>
 
@@ -367,8 +178,7 @@ export const InputAbsensiView: React.FC<InputAbsensiViewProps> = ({
         )}
 
         {/* Manual Attendance Mode */}
-        {mode === "manual" && (
-          <div className="space-y-4">
+        <div className="space-y-4">
             <div className="flex justify-end">
               <button
                 onClick={handleSetHadirSemua}
@@ -469,74 +279,6 @@ export const InputAbsensiView: React.FC<InputAbsensiViewProps> = ({
               </button>
             </div>
           </div>
-        )}
-
-        {/* Scan Mode */}
-        {mode === "scan" && (
-          <div className="space-y-5 text-center py-4">
-            <p className="text-xs text-slate-500 max-w-lg mx-auto">
-              Arahkan QR Code Kartu Pelajar siswa ke kamera atau masukkan NISN secara manual/barcode reader di bawah.
-            </p>
-
-            {cameraError && (
-              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 rounded-xl text-xs font-semibold max-w-md mx-auto space-y-2">
-                <div className="flex items-center justify-center space-x-1.5 text-amber-700 dark:text-amber-400 font-bold">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>Akses Kamera Dibatasi</span>
-                </div>
-                <p className="text-[11px] leading-relaxed">{cameraError}</p>
-              </div>
-            )}
-
-            <div className="relative w-full max-w-sm mx-auto aspect-4/3 bg-slate-900 rounded-2xl overflow-hidden shadow-lg border-2 border-blue-600 flex items-center justify-center">
-              <video ref={videoRef} className="w-full h-full object-cover" />
-              <canvas ref={canvasRef} className="hidden" />
-              {cameraActive && (
-                <div className="absolute inset-0 border-2 border-dashed border-amber-400/80 rounded-2xl pointer-events-none animate-pulse m-8" />
-              )}
-            </div>
-
-            <div className="flex items-center justify-center space-x-3">
-              <button
-                onClick={cameraActive ? stopCameraProcess : startCameraProcess}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-colors cursor-pointer shadow-xs ${
-                  cameraActive
-                    ? "bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-700 dark:text-slate-200"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
-              >
-                <Camera className="w-4 h-4" />
-                <span>{cameraActive ? "Hentikan Kamera" : "Aktifkan Kamera"}</span>
-              </button>
-            </div>
-
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 border border-blue-200 text-xs font-bold max-w-md mx-auto">
-              {scanStatus}
-            </div>
-
-            {/* Alternative Manual Barcode / NISN Input */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 max-w-md mx-auto">
-              <p className="text-[11px] font-bold text-slate-500 uppercase mb-2">
-                Atau Input / Scan NISN Manual
-              </p>
-              <form onSubmit={handleManualScanSubmit} className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="Ketik NISN atau scan barcode..."
-                  value={manualScanNisn}
-                  onChange={(e) => setManualScanNisn(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs font-mono font-bold border rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0 cursor-pointer shadow-xs"
-                >
-                  Proses
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

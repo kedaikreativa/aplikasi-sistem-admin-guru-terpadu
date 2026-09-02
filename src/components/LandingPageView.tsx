@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  GraduationCap,
+  Presentation,
   Sparkles,
   Play,
   Users,
@@ -62,7 +62,7 @@ Apabila sudah transfer silahkan konfirmasi ya kak, jangan lupa lampirkan tanda b
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200">
-              <GraduationCap className="w-6 h-6" />
+              <Presentation className="w-6 h-6" />
             </div>
             <span className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
               SATU GURU
@@ -401,7 +401,7 @@ Apabila sudah transfer silahkan konfirmasi ya kak, jangan lupa lampirkan tanda b
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
-              <GraduationCap className="w-5 h-5" />
+              <Presentation className="w-5 h-5" />
             </div>
             <span className="text-lg font-bold text-white">SATU GURU (Sistem Administrasi Terpadu Guru)</span>
           </div>

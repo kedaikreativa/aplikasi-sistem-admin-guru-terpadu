@@ -1,5 +1,5 @@
 import React from "react";
-import { Menu, CloudCheck, CloudOff, Moon, Sun, GraduationCap, ShieldCheck, LogOut } from "lucide-react";
+import { Menu, CloudCheck, CloudOff, Moon, Sun, Presentation, ShieldCheck, LogOut } from "lucide-react";
 import { Pengaturan } from "../types";
 
 interface HeaderProps {
@@ -14,12 +14,12 @@ interface HeaderProps {
 }
 
 const TAB_TITLES: Record<string, string> = {
-  dashboard: "Aplikasi Guru AI",
+  dashboard: "Sistem Administrasi Terpadu Guru",
   siswa: "Kelola Master Data Siswa",
   kartu: "Cetak Kartu Pelajar QR Code",
   mapel: "Kelola Mata Pelajaran",
   jadwal: "Jadwal Mengajar Guru",
-  absensi: "Input Absensi Harian & QR Scanner",
+  absensi: "Input Absensi Harian",
   penilaian: "Input Nilai Akademik Siswa",
   agenda: "Jurnal Agenda Mengajar",
   bimbingan: "Catatan Bimbingan Guru Wali",
@@ -65,22 +65,22 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center space-x-2 min-w-0 lg:hidden">
           <div className="w-8 h-8 bg-amber-400 rounded-xl flex items-center justify-center text-slate-900 font-bold shrink-0 shadow-xs">
-            <GraduationCap className="w-4 h-4 text-slate-950" />
+            <Presentation className="w-4 h-4 text-slate-950" />
           </div>
           <div className="flex flex-col min-w-0 leading-tight">
             <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base truncate">
-              {TAB_TITLES[activeTab] || "Aplikasi Guru AI"}
+              {TAB_TITLES[activeTab] || "Sistem Administrasi Terpadu Guru"}
             </span>
             {activeTab !== "dashboard" && (
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">
-                Aplikasi Guru AI
+                Sistem Administrasi Terpadu Guru
               </span>
             )}
           </div>
         </div>
 
         <h1 className="hidden lg:block text-lg font-bold text-slate-800 dark:text-white truncate">
-          {TAB_TITLES[activeTab] || "Aplikasi Guru AI"}
+          {TAB_TITLES[activeTab] || "Sistem Administrasi Terpadu Guru"}
         </h1>
       </div>
 
